@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GitHub Image Uploader</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 0;
+    }
+
+    h2 {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    #drop-area {
+      border: 3px dashed #ccc;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 500px;
+      margin: 30px auto;
+      padding: 20px;
+      text-align: center;
+      background-color: white;
+    }
+
+    #drop-area.hover {
+      border-color: #333;
+    }
+
+    #fileElem {
+      display: none;
+    }
+
+    #preview {
+      margin: 40px auto;
+      text-align: center;
+    }
+
+    #preview img {
+      max-width: 80vw;
+      max-height: 60vh;
+      display: block;
+      margin: 20px auto 10px;
+    }
+
+    #action-buttons {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    button {
+      margin: 5px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #upload-result {
+      margin-top: 20px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      text-align: center;
+    }
+
+    #upload-result.show {
+      opacity: 1;
+    }
+
+    .success-anim {
+      animation: fadeInScale 0.6s ease-out;
+    }
+
+    @keyframes fadeInScale {
+      0% { opacity: 0; transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    #reset-button {
+      display: none;
+      margin-top: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>Upload Gambar ke GitHub</h2>
+  <div id="drop-area">
+    <p>Drag & Drop file di sini atau <button onclick="fileElem.click()">Pilih File</button></p>
+    <input type="file" id="fileElem" accept="image/*" onchange="preparePreview(this.files)">
+  </div>
+
+  <div id="preview">
+    <p id="filename"></p>
+    <img id="filePreview" src="#" style="display:none;" />
+  </div>
+
+  <div id="action-buttons" style="display:none;">
+    <button onclick="cancelUpload()">❌ Cancel</button>
+    <button onclick="uploadFile()">✅ Lanjut</button>
+  </div>
+
+  <div id="upload-result" class="success-anim">
+    <p id="result-text"></p>
+    <a id="file-link" href="#" target="_blank"></a>
+  </div>
+
+  <div id="reset-button">
+    <button onclick="resetAll()">🔄 Reset</button>
+  </div>
+
+  <script>
+    let selectedFile = null;
+
+    const dropArea = document.getElementById("drop-area");
+    const fileElem = document.getElementById("fileElem");
+    const filePreview = document.getElementById("filePreview");
+    const fileName = document.getElementById("filename");
+    const resultText = document.getElementById("result-text");
+    const fileLink = document.getElementById("file-link");
+    const resultBox = document.getElementById("upload-result");
+    const actionButtons = document.getElementById("action-buttons");
+    const resetBtn = document.getElementById("reset-button");
+
+    ["dragenter", "dragover"].forEach(eventName => {
+      dropArea.addEventListener(eventName, e => {
+        e.preventDefault();
+        dropArea.classList.add("hover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(eventName => {
+      dropArea.addEventListener(eventName, e => {
+        e.preventDefault();
+        dropArea.classList.remove("hover");
+      });
+    });
+
+    dropArea.addEventListener("drop", e => {
+      const files = e.dataTransfer.files;
+      preparePreview(files);
+    });
+
+    function preparePreview(files) {
+      const file = files[0];
+      if (!file || !file.type.startsWith("image/")) {
+        alert("Hanya file gambar yang diperbolehkan.");
+        return;
+      }
+
+      selectedFile = file;
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        filePreview.src = e.target.result;
+        filePreview.style.display = "block";
+        fileName.textContent = file.name;
+      };
+      reader.readAsDataURL(file);
+
+      actionButtons.style.display = "block";
+    }
+
+    function cancelUpload() {
+      selectedFile = null;
+      filePreview.src = "#";
+      filePreview.style.display = "none";
+      fileName.textContent = "";
+      actionButtons.style.display = "none";
+      fileElem.value = "";
+    }
+
+    function uploadFile() {
+      if (!selectedFile) return;
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      fetch("/upload", {
+        method: "POST",
+        body: formData,
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.url) {
+          resultText.innerHTML = "✅ Berhasil upload!<br><small>Catatan: URL Resolve butuh beberapa saat untuk aktif, jika akses URL belum aktif coba lagi beberapa saat.</small>";
+          fileLink.href = data.url;
+          fileLink.textContent = data.url;
+          resultBox.classList.add("show", "success-anim");
+          resetBtn.style.display = "block";
+        } else {
+          resultText.textContent = "❌ Gagal upload.";
+        }
+      })
+      .catch(err => {
+        resultText.textContent = "❌ Error saat upload.";
+        console.error(err);
+      });
+
+      // Hide action buttons
+      actionButtons.style.display = "none";
+    }
+
+    function resetAll() {
+      selectedFile = null;
+      filePreview.src = "#";
+      filePreview.style.display = "none";
+      fileName.textContent = "";
+      resultText.textContent = "";
+      fileLink.textContent = "";
+      fileLink.href = "#";
+      resultBox.classList.remove("show", "success-anim");
+      resetBtn.style.display = "none";
+      fileElem.value = "";
+    }
+  </script>
+</body>
+</html>
