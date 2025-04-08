@@ -52,7 +52,7 @@ GITHUB_USERNAME=your-username
 GITHUB_TOKEN=your-personal-access-token
 REPO_URL=https://api.github.com/repos/your-username/your-repo
 UPLOAD_FOLDER=images
-CDN_URL=https://cdn.jsdelivr.net/gh/your-username/your-repo/images/
+CDN_URL=https://your-github.io-url/images/
 ```
 
 > 💡 You must use a **Personal Access Token** with `repo` scope if uploading to private repositories. Public repos only require basic access.
@@ -88,16 +88,11 @@ http://localhost:5000
    - `✅ Lanjut` to upload to GitHub
 4. On success:
    - Success message with direct CDN URL appears
-   - Includes note: *"URL may take a few seconds to propagate via CDN"*
+   - Includes note: *"URL Resolve butuh beberapa saat untuk aktif, jika akses URL belum aktif coba lagi beberapa saat."*
 5. Optionally click `🔄 Reset` to start a new upload.
 
 ---
 
-## 📸 Demo (Screenshots)
-
-> (You can insert screenshots here if desired)
-
----
 
 ## 🚧 Limitations
 
