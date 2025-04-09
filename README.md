@@ -7,8 +7,11 @@ A lightweight, browser-based tool that allows users to upload image files direct
 
 ## ✨ Features
 
+- 🔐 Login with username & password (defined in `.env`)
 - ✅ Drag & drop or select image files from your device
 - 🖼️ Instant preview before upload
+- 📁 Support multiple image upload (multiple image)
+- 👁️ Real-time preview before upload
 - 🚫 File protection: Only image files are allowed (`image/*`)
 - 🧠 Upload delay mechanism with `Lanjut` and `Cancel` options
 - 🔁 Overwrites existing files if they share the same name (GitHub handles versioning)
@@ -53,6 +56,8 @@ GITHUB_TOKEN=your-personal-access-token
 REPO_URL=https://api.github.com/repos/your-username/your-repo
 UPLOAD_FOLDER=images
 CDN_URL=https://your-github.io-url/images/
+APP_USERNAME=your-user
+APP_PASSWORD=your-password
 ```
 
 > 💡 You must use a **Personal Access Token** with `repo` scope if uploading to private repositories. Public repos only require basic access.

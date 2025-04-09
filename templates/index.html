@@ -1,220 +1,274 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
+
 <head>
+  <meta charset="UTF-8">
   <title>GitHub Image Uploader</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
+      font-family: sans-serif;
       margin: 0;
-      padding: 0;
-    }
-
-    h2 {
+      padding: 2em;
+      background: #f4f4f4;
       text-align: center;
-      margin-top: 30px;
     }
 
     #drop-area {
-      border: 3px dashed #ccc;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 500px;
-      margin: 30px auto;
-      padding: 20px;
-      text-align: center;
-      background-color: white;
-    }
-
-    #drop-area.hover {
-      border-color: #333;
-    }
-
-    #fileElem {
-      display: none;
-    }
-
-    #preview {
-      margin: 40px auto;
-      text-align: center;
-    }
-
-    #preview img {
-      max-width: 80vw;
-      max-height: 60vh;
-      display: block;
-      margin: 20px auto 10px;
-    }
-
-    #action-buttons {
-      text-align: center;
-      margin-top: 10px;
-    }
-
-    button {
-      margin: 5px;
-      padding: 8px 16px;
-      font-size: 14px;
+      border: 2px dashed #888;
+      padding: 2em;
+      background: #fff;
+      border-radius: 8px;
       cursor: pointer;
     }
 
-    #upload-result {
-      margin-top: 20px;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-      text-align: center;
+    .preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 2em;
     }
 
-    #upload-result.show {
-      opacity: 1;
+    .preview {
+      position: relative;
+      margin: 10px;
     }
 
-    .success-anim {
-      animation: fadeInScale 0.6s ease-out;
+    .preview img {
+      max-width: 250px;
+      max-height: 250px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
     }
 
-    @keyframes fadeInScale {
-      0% { opacity: 0; transform: scale(0.9); }
-      100% { opacity: 1; transform: scale(1); }
+    .delete-btn {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      width: 25px;
+      height: 25px;
     }
 
-    #reset-button {
+    #upload-section {
       display: none;
       margin-top: 20px;
-      text-align: center;
+    }
+
+    input[type="number"] {
+      width: 80px;
+      padding: 0.5em;
+      margin-top: 1em;
+    }
+
+    .success-message {
+      margin-top: 1em;
+      background: #dff0d8;
+      padding: 1em;
+      border-radius: 6px;
+      color: #3c763d;
+    }
+
+    .reset-btn {
+      margin-top: 10px;
+      padding: 0.5em 1em;
+      background: #ccc;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 2em;
+    }
+
+    .preview {
+      position: relative;
+      width: 30%;
+      max-width: 250px;
+      flex: 1 1 calc(33.333% - 32px);
+    }
+
+    .preview img {
+      width: 100%;
+      height: auto;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      width: 25px;
+      height: 25px;
+    }
+
+    /* Tambahan untuk sembunyikan tombol delete */
+    .no-delete .delete-btn {
+      display: none;
+    }
+
+    /* Loader Spinner */
+    #loader {
+      display: none;
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #3498db;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 1em auto;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
   </style>
 </head>
+
 <body>
+
   <h2>Upload Gambar ke GitHub</h2>
+
   <div id="drop-area">
-    <p>Drag & Drop file di sini atau <button onclick="fileElem.click()">Pilih File</button></p>
-    <input type="file" id="fileElem" accept="image/*" onchange="preparePreview(this.files)">
+    <p>Drag & drop gambar ke sini atau klik untuk memilih</p>
+    <input type="file" id="fileElem" accept="image/*" multiple hidden>
+    <button onclick="document.getElementById('fileElem').click()">Pilih File</button>
   </div>
 
-  <div id="preview">
-    <p id="filename"></p>
-    <img id="filePreview" src="#" style="display:none;" />
-  </div>
+  <div class="preview-container" id="preview"></div>
 
-  <div id="action-buttons" style="display:none;">
-    <button onclick="cancelUpload()">❌ Cancel</button>
-    <button onclick="uploadFile()">✅ Lanjut</button>
+  <div id="upload-section">
+    <p>Captcha: {{ captcha }}</p>
+    <input type="number" id="captcha" placeholder="Jawaban captcha">
+    <br>
+    <button onclick="uploadFiles()">Lanjut Upload</button>
+    <button onclick="resetPage()" class="reset-btn">Reset</button>
   </div>
-
-  <div id="upload-result" class="success-anim">
-    <p id="result-text"></p>
-    <a id="file-link" href="#" target="_blank"></a>
-  </div>
-
-  <div id="reset-button">
-    <button onclick="resetAll()">🔄 Reset</button>
-  </div>
+  <div id="loader"></div>
+  <div id="result" class="success-message" style="display: none;"></div>
 
   <script>
-    let selectedFile = null;
+    let selectedFiles = [];
 
-    const dropArea = document.getElementById("drop-area");
-    const fileElem = document.getElementById("fileElem");
-    const filePreview = document.getElementById("filePreview");
-    const fileName = document.getElementById("filename");
-    const resultText = document.getElementById("result-text");
-    const fileLink = document.getElementById("file-link");
-    const resultBox = document.getElementById("upload-result");
-    const actionButtons = document.getElementById("action-buttons");
-    const resetBtn = document.getElementById("reset-button");
+    document.getElementById('fileElem').addEventListener('change', handleFiles, false);
+    document.getElementById('drop-area').addEventListener('dragover', e => e.preventDefault());
+    document.getElementById('drop-area').addEventListener('drop', e => {
+      e.preventDefault();
+      handleFiles({ target: { files: e.dataTransfer.files } });
+    });
 
-    ["dragenter", "dragover"].forEach(eventName => {
-      dropArea.addEventListener(eventName, e => {
-        e.preventDefault();
-        dropArea.classList.add("hover");
+    function handleFiles(e) {
+      const files = Array.from(e.target.files);
+      for (let file of files) {
+        if (!file.type.startsWith("image/")) {
+          alert(`File "${file.name}" bukan gambar. Hanya file image yang diizinkan.`);
+          continue;
+        }
+        selectedFiles.push(file);
+      }
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const preview = document.getElementById('preview');
+      preview.innerHTML = '';
+      selectedFiles.forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const div = document.createElement('div');
+          div.className = 'preview';
+          div.innerHTML = `
+            <img src="${e.target.result}">
+            <button class="delete-btn" onclick="removeFile(${idx})">×</button>
+          `;
+          preview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
       });
-    });
+      document.getElementById('upload-section').style.display = selectedFiles.length > 0 ? 'block' : 'none';
+    }
 
-    ["dragleave", "drop"].forEach(eventName => {
-      dropArea.addEventListener(eventName, e => {
-        e.preventDefault();
-        dropArea.classList.remove("hover");
-      });
-    });
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      updatePreview();
+    }
 
-    dropArea.addEventListener("drop", e => {
-      const files = e.dataTransfer.files;
-      preparePreview(files);
-    });
-
-    function preparePreview(files) {
-      const file = files[0];
-      if (!file || !file.type.startsWith("image/")) {
-        alert("Hanya file gambar yang diperbolehkan.");
+    function uploadFiles() {
+      const captcha = document.getElementById('captcha').value;
+      if (!captcha) {
+        alert("Mohon isi captcha.");
         return;
       }
 
-      selectedFile = file;
-
-      const reader = new FileReader();
-      reader.onload = e => {
-        filePreview.src = e.target.result;
-        filePreview.style.display = "block";
-        fileName.textContent = file.name;
-      };
-      reader.readAsDataURL(file);
-
-      actionButtons.style.display = "block";
-    }
-
-    function cancelUpload() {
-      selectedFile = null;
-      filePreview.src = "#";
-      filePreview.style.display = "none";
-      fileName.textContent = "";
-      actionButtons.style.display = "none";
-      fileElem.value = "";
-    }
-
-    function uploadFile() {
-      if (!selectedFile) return;
-
       const formData = new FormData();
-      formData.append("file", selectedFile);
+      selectedFiles.forEach(file => formData.append('file', file));
+      formData.append('captcha', captcha);
 
-      fetch("/upload", {
-        method: "POST",
-        body: formData,
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.url) {
-          resultText.innerHTML = "✅ Berhasil upload!<br><small>Catatan: URL Resolve butuh beberapa saat untuk aktif, jika akses URL belum aktif coba lagi beberapa saat.</small>";
-          fileLink.href = data.url;
-          fileLink.textContent = data.url;
-          resultBox.classList.add("show", "success-anim");
-          resetBtn.style.display = "block";
-        } else {
-          resultText.textContent = "❌ Gagal upload.";
-        }
-      })
-      .catch(err => {
-        resultText.textContent = "❌ Error saat upload.";
-        console.error(err);
-      });
+      // Tampilkan loader
+      document.getElementById('loader').style.display = 'block';
 
-      // Hide action buttons
-      actionButtons.style.display = "none";
+      fetch('/upload', {
+        method: 'POST',
+        body: formData
+      })
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('loader').style.display = 'none'; // Sembunyikan loader
+          if (data.error) {
+            alert(data.error);
+            return;
+          }
+
+          const result = document.getElementById('result');
+          result.style.display = 'block';
+          result.innerHTML = `
+      <strong>Berhasil upload!</strong><br>
+      Catatan: URL Resolve butuh beberapa saat untuk aktif, jika akses URL belum aktif coba lagi beberapa saat.
+      <br><br>
+      ${data.urls.map(url => `<a href="${url}" target="_blank">${url}</a>`).join('<br>')}
+    `;
+
+          // Nonaktifkan tombol delete setelah upload
+          document.querySelectorAll('.preview').forEach(preview => {
+            preview.classList.add('no-delete');
+          });
+        })
+        .catch(err => {
+          document.getElementById('loader').style.display = 'none'; // Sembunyikan loader walau error
+          alert("Upload gagal.");
+          console.error(err);
+        });
     }
 
-    function resetAll() {
-      selectedFile = null;
-      filePreview.src = "#";
-      filePreview.style.display = "none";
-      fileName.textContent = "";
-      resultText.textContent = "";
-      fileLink.textContent = "";
-      fileLink.href = "#";
-      resultBox.classList.remove("show", "success-anim");
-      resetBtn.style.display = "none";
-      fileElem.value = "";
+
+    function resetPage() {
+      selectedFiles = [];
+      document.getElementById('preview').innerHTML = '';
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('captcha').value = '';
+      document.getElementById('upload-section').style.display = 'none';
     }
   </script>
 </body>
+
 </html>
